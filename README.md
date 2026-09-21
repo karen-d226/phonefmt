@@ -10,8 +10,10 @@ belongs to, and whether it's even a plausible number at all.
 
 It is not a replacement for a full numbering-plan database (it doesn't know
 every area code or mobile prefix on earth). It covers a couple dozen common
-country calling codes and the NANP (US/Canada) national format in detail,
-and falls back to plain digit grouping elsewhere.
+country calling codes and has detailed national formatting for NANP
+(US/Canada), France, the Netherlands, Spain, Australia, China, India,
+Mexico, and South Africa. Everywhere else it falls back to plain digit
+grouping.
 
 ## Usage
 
@@ -49,7 +51,7 @@ $ phonefmt --json "+91 98765 43210"
   "input": "+91 98765 43210",
   "valid": true,
   "e164": "+919876543210",
-  "national": "987 654 321 0",
+  "national": "98765 43210",
   "countryCode": "91",
   "countryIso": "IN",
   "countryName": "India",

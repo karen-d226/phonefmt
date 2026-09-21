@@ -107,16 +107,74 @@ export function parsePhoneNumber(raw: string): ParsedPhone {
   };
 }
 
+function groupBySizes(digits: string, sizes: number[]): string {
+  const groups: string[] = [];
+  let i = 0;
+  for (const size of sizes) {
+    groups.push(digits.slice(i, i + size));
+    i += size;
+  }
+  return groups.join(" ");
+}
+
 function formatNational(countryCode: string, nationalDigits: string): string {
-  if (countryCode === "1" && nationalDigits.length === 10) {
-    const area = nationalDigits.slice(0, 3);
-    const exchange = nationalDigits.slice(3, 6);
-    const line = nationalDigits.slice(6);
-    return `(${area}) ${exchange}-${line}`;
+  switch (countryCode) {
+    case "1":
+      if (nationalDigits.length === 10) {
+        const area = nationalDigits.slice(0, 3);
+        const exchange = nationalDigits.slice(3, 6);
+        const line = nationalDigits.slice(6);
+        return `(${area}) ${exchange}-${line}`;
+      }
+      break;
+    case "33": // France: trunk 0 + five pairs, e.g. 06 12 34 56 78
+      if (nationalDigits.length === 9) {
+        return groupBySizes(`0${nationalDigits}`, [2, 2, 2, 2, 2]);
+      }
+      break;
+    case "31": // Netherlands: trunk 0 + five pairs, e.g. 06 12 34 56 78
+      if (nationalDigits.length === 9) {
+        return groupBySizes(`0${nationalDigits}`, [2, 2, 2, 2, 2]);
+      }
+      break;
+    case "34": // Spain: no trunk prefix, groups of 3
+      if (nationalDigits.length === 9) {
+        return groupBySizes(nationalDigits, [3, 3, 3]);
+      }
+      break;
+    case "61": // Australia: mobile 04XX XXX XXX, landline 0X XXXX XXXX
+      if (nationalDigits.length === 9) {
+        const withTrunk = `0${nationalDigits}`;
+        return nationalDigits.startsWith("4")
+          ? groupBySizes(withTrunk, [4, 3, 3])
+          : groupBySizes(withTrunk, [2, 4, 4]);
+      }
+      break;
+    case "86": // China: mobile 3-4-4
+      if (nationalDigits.length === 11) {
+        return groupBySizes(nationalDigits, [3, 4, 4]);
+      }
+      break;
+    case "91": // India: 5-5
+      if (nationalDigits.length === 10) {
+        return groupBySizes(nationalDigits, [5, 5]);
+      }
+      break;
+    case "52": // Mexico: 3-3-4
+      if (nationalDigits.length === 10) {
+        return groupBySizes(nationalDigits, [3, 3, 4]);
+      }
+      break;
+    case "27": // South Africa: trunk 0 + 3-3-4
+      if (nationalDigits.length === 9) {
+        return groupBySizes(`0${nationalDigits}`, [3, 3, 4]);
+      }
+      break;
   }
 
-  // No per-country grouping rule on file: fall back to plain 3-digit chunks
-  // rather than guessing at a pattern we don't actually know.
+  // No per-country grouping rule on file (or the digit count didn't match the
+  // shape the rule above expects): fall back to plain 3-digit chunks rather
+  // than guessing at a pattern we don't actually know.
   const groups: string[] = [];
   for (let i = 0; i < nationalDigits.length; i += 3) {
     groups.push(nationalDigits.slice(i, i + 3));
