@@ -40,6 +40,22 @@ error:    cannot infer a country code from "555-01"; include a leading + or 00 p
 
 You can pass more than one number; each gets its own block of output.
 
+### Reading from stdin
+
+If you don't pass any numbers as arguments, `phonefmt` reads them from
+stdin instead, one per line (blank lines are skipped):
+
+```
+$ cat numbers.txt | phonefmt --json
+[
+  {
+    "input": "(415) 555-2671",
+    ...
+  },
+  ...
+]
+```
+
 ### JSON mode
 
 Pass `--json` to get machine-readable output instead, for use in scripts or

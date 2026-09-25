@@ -1,22 +1,35 @@
 #!/usr/bin/env node
+import { readFileSync } from "node:fs";
 import { parsePhoneNumber, type ParsedPhone } from "./phone.js";
 
 const USAGE = `phonefmt - normalize and validate phone numbers
 
 usage:
   phonefmt [--json] <number> [<number> ...]
+  <something> | phonefmt [--json]
 
 examples:
   phonefmt "(415) 555-2671"
   phonefmt "+44 20 7946 0958"
   phonefmt --json "+91 98765 43210"
+  cat numbers.txt | phonefmt --json
 
 options:
   --json      print results as JSON instead of plain text
   -h, --help  show this message
 
-exit status is 1 if any given number failed to parse.
+with no <number> arguments, numbers are read from stdin, one per line.
+blank lines are skipped. exit status is 1 if any given number failed to
+parse.
 `;
+
+function readNumbersFromStdin(): string[] {
+  const text = readFileSync(0, "utf-8");
+  return text
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
+}
 
 function formatHumanBlock(result: ParsedPhone): string {
   const lines = [`input:    ${result.input}`];
@@ -52,6 +65,10 @@ function main(): void {
     } else {
       numbers.push(arg);
     }
+  }
+
+  if (numbers.length === 0 && !process.stdin.isTTY) {
+    numbers.push(...readNumbersFromStdin());
   }
 
   if (numbers.length === 0) {
