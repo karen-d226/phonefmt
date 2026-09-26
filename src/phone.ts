@@ -1,4 +1,9 @@
-import { COUNTRIES, matchCountryCode } from "./countries.js";
+import { COUNTRIES, matchCountryCode, type CountryInfo } from "./countries.js";
+
+export interface ParsePhoneOptions {
+  /** country to assume when the input has no leading + or 00 prefix */
+  defaultCountry?: CountryInfo;
+}
 
 export interface ParsedPhone {
   input: string;
@@ -15,6 +20,10 @@ function onlyDigits(value: string): string {
   return value.replace(/[^0-9]/g, "");
 }
 
+// Countries where domestic numbers are dialed with a leading trunk 0 that's
+// dropped in E.164 form (kept in sync with the trunk-0 cases in formatNational).
+const TRUNK_ZERO_CODES = new Set(["33", "31", "61", "27"]);
+
 function invalid(input: string, error: string, partial: Partial<ParsedPhone> = {}): ParsedPhone {
   return {
     input,
@@ -29,7 +38,7 @@ function invalid(input: string, error: string, partial: Partial<ParsedPhone> = {
   };
 }
 
-export function parsePhoneNumber(raw: string): ParsedPhone {
+export function parsePhoneNumber(raw: string, options: ParsePhoneOptions = {}): ParsedPhone {
   const input = raw.trim();
 
   if (input.length === 0) {
@@ -64,6 +73,18 @@ export function parsePhoneNumber(raw: string): ParsedPhone {
     }
     countryCode = country.code;
     nationalDigits = digits.slice(country.code.length);
+  } else if (options.defaultCountry) {
+    const dc = options.defaultCountry;
+    if (dc.code === "1" && digits.length === 11 && digits.startsWith("1")) {
+      countryCode = "1";
+      nationalDigits = digits.slice(1);
+    } else if (TRUNK_ZERO_CODES.has(dc.code) && digits.startsWith("0")) {
+      countryCode = dc.code;
+      nationalDigits = digits.slice(1);
+    } else {
+      countryCode = dc.code;
+      nationalDigits = digits;
+    }
   } else if (digits.length === 11 && digits.startsWith("1")) {
     countryCode = "1";
     nationalDigits = digits.slice(1);
@@ -73,7 +94,7 @@ export function parsePhoneNumber(raw: string): ParsedPhone {
   } else {
     return invalid(
       input,
-      `cannot infer a country code from "${input}"; include a leading + or 00 prefix`,
+      `cannot infer a country code from "${input}"; include a leading + or 00 prefix, or pass --country`,
     );
   }
 

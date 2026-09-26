@@ -98,7 +98,33 @@ node dist/cli.js "+1 415 555 2671"
   the `1` country code implied; an 11-digit number starting with `1` is
   treated the same way.
 - Anything else without an explicit country code is rejected rather than
-  guessed at.
+  guessed at, unless `--country` says otherwise.
+
+### Disambiguating with `--country`
+
+Numbers without a `+` or `00` prefix that aren't 10/11-digit NANP shapes
+have no way to guess which country they belong to. Pass `--country` with
+either an ISO alpha-2 code or a calling code to tell `phonefmt` how to read
+them:
+
+```
+$ phonefmt --country FR "01 23 45 67 89"
+input:    01 23 45 67 89
+valid:    yes
+e164:     +33123456789
+national: 01 23 45 67 89
+country:  France (+33)
+
+$ phonefmt --country 44 "20 7946 0958"
+input:    20 7946 0958
+valid:    yes
+e164:     +442079460958
+national: 207 946 095 8
+country:  United Kingdom (+44)
+```
+
+`--country` only affects numbers that lack an explicit international
+prefix; a number already starting with `+` or `00` is read as written.
 
 ## License
 

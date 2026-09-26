@@ -34,3 +34,17 @@ export function matchCountryCode(digits: string): CountryInfo | undefined {
   const byLengthDesc = [...COUNTRIES].sort((a, b) => b.code.length - a.code.length);
   return byLengthDesc.find((c) => digits.startsWith(c.code));
 }
+
+// Looks a country up by calling code ("44") or ISO alpha-2 ("GB"). Entries
+// like "US/CA" cover more than one ISO code, so each side is checked on its own.
+export function findCountry(query: string): CountryInfo | undefined {
+  const q = query.trim();
+  if (q.length === 0) {
+    return undefined;
+  }
+  if (/^\d+$/.test(q)) {
+    return COUNTRIES.find((c) => c.code === q);
+  }
+  const upper = q.toUpperCase();
+  return COUNTRIES.find((c) => c.iso.split("/").some((part) => part === upper));
+}
